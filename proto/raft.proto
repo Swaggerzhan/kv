@@ -1,0 +1,53 @@
+syntax = "proto3";
+package raft;
+
+option cc_generic_services = true;
+
+
+message LogEntry {
+  optional int32 prevLogIndex = 1;
+  optional int32 nextLogIndex = 2;
+}
+
+
+// 日志入口 heartbeat
+message AppendEntriesRequest {
+  optional int32 term = 1; // 任期
+  repeated LogEntry Log = 2; // 日志
+  optional int32 leaderID = 3; // 领导者
+}
+
+message AppendEntriesRespond {
+  optional bool accept = 1; // 日志是否接受
+  optional int32 term = 2; // 任期
+  // 其余....
+
+}
+
+// 选举提交
+message ElectRequest {
+  optional int32 term = 1;          // 选举任期
+  optional int32 candidateID = 2;   // 选举人ID
+  optional int32 lastLogIndex = 3;  // 提交索引
+  optional int32 lastLogTerm = 4;   // 对应的任期
+
+}
+
+// 响应
+message ElectRespond {
+  optional bool accept = 1; // 是否响应投票
+  optional int32 term = 2; // 当前节点的任期
+}
+
+
+service Raft {
+  // 日志心跳
+  rpc AppendEntries( AppendEntriesRequest ) returns (AppendEntriesRespond);
+  // 选举
+  rpc Elect( ElectRequest) returns (ElectRespond );
+
+}
+
+
+
+
