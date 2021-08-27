@@ -143,6 +143,51 @@ void RaftImpl::appendLogLoop() {
 
 
 void RaftImpl::electionLoop() {
+    while ( !self->isKill ) {
+        // sleep some time
+        {
+            MutexLockGuard lock(self->mu);
+            TimeStamp now = TimeStamp::now();
+            // TODO: checkout timeout
+            if ( self->role == follower ){
+                //TODO: timeout change role to candidate
+                self->role = candidate;
+            }
+            if ( self->role == candidate ){
+                self->currentTerm += 1; // 进入新一任期的选举
+                self->voteFor = self->me; // 先为自己投票
 
+                raft::ElectRequest args;
+                args.set_term(self->currentTerm);
+                args.set_nodeid(self->me);
+                // FIXME: rpc need to unlock
+                // TODO: 实现并发获取选票
+                // 使用一个全局的变量，并且此线程使用条件变量去等待某个条件达成
+                // 如voteCount >= 2f,或者finishCount == totalNode;
+                int voteCount = 1; // 获取的选票
+                int finishCount = 1; // 成功的节点
+                // use event loop?
+                // 这里启动线程
+
+                // 线程结束后检查是否有更高的任期存在，如果有则成为follower
+                if ( self->role != candidate ){
+                    continue;
+                }
+                // 检测是否有更高的任期
+                if ( self->currentTerm ){
+                    self->currentTerm = 0; // 新任期
+                    self->role = follower;
+                    self->leaderID = -1;
+                    self->voteFor = -1;
+                    continue;
+                }
+                /* 多数选票获选 */
+                self->role = leader;
+                self->leaderID = self->me;
+                self->lastBroadCast = TimeStamp::now();
+            }
+
+        }
+    }
 }
 
