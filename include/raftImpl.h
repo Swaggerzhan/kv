@@ -44,7 +44,19 @@ public:
     /* 节点的启动 */
     void start();
 
+    /* for test */
+    void kill();
+    bool isKill();
+
 private:
+
+    /* 选举线程 */
+    void electionLoop();
+
+    /* AppendLog线程 */
+    void appendLogLoop();
+
+    RaftNode* self;
 
 
 
